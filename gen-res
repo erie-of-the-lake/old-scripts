@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+target_display=("DP-0" "DP-2")
+
+target_filename="add-res"
+echo "#!/usr/bin/env bash" > "$target_filename"
+chmod +x "$target_filename"
+
+display_res_vert=1440
+display_res_horiz=2560
+display_refresh_hz=144
+
+lowest_frac=50 # percentage
+
+
+for display in "${target_display[@]}"; do
+#for display in "DP-0"; do
+	scale=100
+	while [[ "$scale" -ge "$lowest_frac" ]]; do
+		curr_res_horiz=$(( ($display_res_horiz * $scale) / 100 ))
+		curr_res_vert=$(( ($display_res_vert * $scale) / 100 ))
+		# newmode to xrandr
+		newmode="$(cvt $curr_res_horiz $curr_res_vert $display_refresh_hz |
+			awk 'NR==2' |
+			sed 's/Modeline //')"
+		# addmode to xrandr
+		addmode="$(cvt $curr_res_horiz $curr_res_vert $display_refresh_hz |
+			awk 'NR==2 {print $2}')"
+		echo "xrandr --newmode $newmode" >> "$target_filename"
+		echo "xrandr --addmode '$display' $addmode" >> "$target_filename"
+		scale=$(($scale - 5))	
+	done
+done
