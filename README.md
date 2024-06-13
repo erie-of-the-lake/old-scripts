@@ -108,11 +108,11 @@ Depending on the option selected, `mkram` will either mount or unmount a ramdisk
 
 **mount** [*size*]
 
-    mount a tmpfs ramdisk with optional size (default = 16G)
+  mount a tmpfs ramdisk with optional size (default = 16G)
 
 **umount**
 
-    unmount a ramdisk if one exists
+  unmount a ramdisk if one exists
 
 
 ## `pdf2mp3`
@@ -190,11 +190,11 @@ surfshark-vpn disable && unfirewall && surfshark-vpn enable && firewall
 
 **-s**
 
-    Make a soft refresh of `surfshark-vpn`, never disabling or turning it off completely
+  Make a soft refresh of `surfshark-vpn`, never disabling or turning it off completely
 
 **-e**
 
-    Exit the terminal session after a successful run of the program
+  Exit the terminal session after a successful run of the program
 
 
 ## `watch-cpu`
