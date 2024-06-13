@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# This program can call n arguments and will make a backup to all of them
+
+for f in "$@"; do
+	cp "$f" "$f.bak"
+done
