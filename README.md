@@ -7,33 +7,34 @@ When a particular script has positional and/or optional arguments, the relevant 
 
 # Table of Contents
 
-- [`add-res`](#`add-res`)
-- [`archive-dir`](#`archive-dir`)
-- [`check-iommu`](#`check-iommu`)
-- [`cpbak`](#`cpbak`)
-- [`eclip`](#`eclip`)
-- [`firewall`](#`firewall`)
-- [`fmclk`](#`fmclk`)
-- [`gen-res`](#`gen-res`)
-- [`img-show`](#`img-show`)
-- [`limit-cpu-cores`](#`limit-cpu-cores`)
-- [`mkram`](#`mkram`)
-- [`pdf2mp3`](#`pdf2mp3`)
-- [`rnsong`](#`rnsong`)
-- [`screenshot2text`](#`screenshot2text`)
-- [`set-card0-auto`](#`set-card0-auto`)
-- [`set-card0-high`](#`set-card0-high`)
-- [`sshvm`](#`sshvm`)
-- [`sys-update`](#`sys-update`)
-- [`unfirewall`](#`unfirewall`)
-- [`vpnr`](#`vpnr`)
-- [`watch-cpu`](#`watch-cpu`)
+- [`add-res`](#add-res)
+- [`archive-dir`](#archive-dir)
+- [`check-iommu`](#check-iommu)
+- [`cpbak`](#cpbak`)
+- [`eclip`](#eclip)
+- [`firewall`](#firewall)
+- [`fmclk`](#fmclk)
+- [`gen-res`](#gen-res)
+- [`img-show`](#img-show)
+- [`limit-cpu-cores`](#limit-cpu-cores)
+- [`mkram`](#mkram)
+- [`pdf2mp3`](#pdf2mp3)
+- [`rnsong`](#rnsong)
+- [`screenshot2text`](#screenshot2text)
+- [`set-card0-auto`](#set-card0-auto)
+- [`set-card0-high`](#set-card0-high)
+- [`sshvm`](#sshvm)
+- [`sys-update`](#sys-update)
+- [`unfirewall`](#unfirewall)
+- [`vpnr`](#vpnr)
+- [`watch-cpu`](#watch-cpu)
 
 
 
 # Script Names & Functions
 
 ## `add-res`
+
 ## `vpnr`
 
 Meant to work with the `surfshark-vpn` CLI, `vpnr`, short for *vpn refresh*, temporarily resets part of the [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) firewall via [`unfirewall`](#`unfirewall`), refreshes a SurfShark VPN connection, and re-enables a system-wide VPN killswitch via [`firewall`](#`firewall`). In other words, if no additional arguments are called, `vpnr` essentially performs the following behavior in bash-like pseudocode:
@@ -98,7 +99,7 @@ Short for *force memory clock*, this script would force the AMD RX 580 to run at
 
 ## `gen-res`
 
-Hard-coded to work on a 1440p monitor running at 144 Hz, `gen-res` calculates the necessary CVT, or *Coordinated Video Timings*, for a given fraction (divisible by 0.05) of between 50% and 100% inclusive of 1440p's vertical and horizontal resolutions. The resulting calculations then get appended to [`add-res`](#`add-res`).
+Hard-coded to work on a 1440p monitor running at 144 Hz, `gen-res` calculates the necessary CVT, or *Coordinated Video Timings*, for a given fraction (divisible by 0.05) of between 50% and 100% inclusive of 1440p's vertical and horizontal resolutions. The resulting calculations then get appended to [`add-res`](#add-res).
 
 
 ## `img-show`
@@ -160,12 +161,12 @@ Only usable on X11 due to its reliance on [`xclip`](https://linux.die.net/man/1/
 
 ## `set-card0-auto`
 
-Meant for desktops with an AMD GPU (notably an RX 580 when my main desktop had one), this script sets `card0`'s *dpm*, or *dynamic power management*, back to `auto` (via `power_dpm_force_performance_level`). This is useful whenever [`set-card0-high`](#`set-card0-high`) is called.
+Meant for desktops with an AMD GPU (notably an RX 580 when my main desktop had one), this script sets `card0`'s *dpm*, or *dynamic power management*, back to `auto` (via `power_dpm_force_performance_level`). This is useful whenever [`set-card0-high`](#set-card0-high) is called.
 
 
 ## `set-card0-high`
 
-Like with [`set-card0-auto`](#`set-card0-auto`), this script is meant for desktops with an AMD GPU. Notably, forcing `card0`'s *dpm* or *dynamic power management* (via `power_dpm_force_performance_level`) to `high` fixes a bug present in many AMD GPUs using the GCN architecture where the screen would artefact when multiple screens of differing refresh rates are connected.
+Like with [`set-card0-auto`](#set-card0-auto), this script is meant for desktops with an AMD GPU. Notably, forcing `card0`'s *dpm* or *dynamic power management* (via `power_dpm_force_performance_level`) to `high` fixes a bug present in many AMD GPUs using the GCN architecture where the screen would artefact when multiple screens of differing refresh rates are connected.
 
 
 ## `sshvm`
@@ -185,12 +186,12 @@ Like with [`set-card0-auto`](#`set-card0-auto`), this script is meant for deskto
 
 ## `unfirewall`
 
-As a complement to [`firewall`](#`firewall`), `unfirewall` uses [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) to only enable outgoing traffic, making it useful to re-establish a downed VPN connection, rerunning [`firewall`](#`firewall`) afterwards to reset the VPN killswitch.
+As a complement to [`firewall`](#firewall), `unfirewall` uses [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) to only enable outgoing traffic, making it useful to re-establish a downed VPN connection, rerunning [`firewall`](#`firewall`) afterwards to reset the VPN killswitch.
 
 
 ## `vpnr`
 
-Meant to work with the `surfshark-vpn` CLI, `vpnr`, short for *vpn refresh*, temporarily resets part of the [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) firewall via [`unfirewall`](#`unfirewall`), refreshes a SurfShark VPN connection, and re-enables a system-wide VPN killswitch via [`firewall`](#`firewall`). In other words, if no additional arguments are called, `vpnr` essentially performs the following behavior in bash-like pseudocode:
+Meant to work with the `surfshark-vpn` CLI, `vpnr`, short for *vpn refresh*, temporarily resets part of the [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) firewall via [`unfirewall`](#unfirewall), refreshes a SurfShark VPN connection, and re-enables a system-wide VPN killswitch via [`firewall`](#firewall). In other words, if no additional arguments are called, `vpnr` essentially performs the following behavior in bash-like pseudocode:
 ```bash
 surfshark-vpn disable && unfirewall && surfshark-vpn enable && firewall
 ```
