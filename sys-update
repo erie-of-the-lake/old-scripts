@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+
+"""
+This program acts essentially as a  wrapper for updating various things (e.g. flatpak, apt,
+python3 packages, etc.)
+
+by: Erie Shadrock
+"""
+
+# -------------------------------------------------------------------------------------
+# IMPORTS
+
+import time
+import sys
+import subprocess
+
+# for the wrapper function in `sleep_decorator` to make logging consistent
+#   if multiple wrappers are used
+from functools import wraps
+
+# for automatic coloring and bold/italic/plain formatting
+from prompt_toolkit import HTML, print_formatted_text
+from prompt_toolkit.styles import Style
+
+
+# -------------------------------------------------------------------------------------
+# CONSTANTS
+
+SLEEP_TIME = 0.75
+SEPARATOR  = '='*50
+
+PRINT_STYLE = Style.from_dict({
+    'error'    : '#ff0000',
+    'progress' : '#00ffff',
+    'separator': '#afeeee bold'
+})
+
+# -------------------------------------------------------------------------------------
+# MAIN UTILITY FUNCTIONS
+
+def sleep_decorator(before=False, after=False):
+    """
+    Will use time.sleep to sleep before and after the function is called. If `before` and `after`
+    are both False (i.e. no arguments are passed to them), the default behavior is to use
+    time.sleep before and after the function is called
+    """
+
+    if not (before or after):
+        before = True
+        after = True
+    
+    def outer_wrapper(func : callable):
+        """
+        Wrapper for decorated function
+        """
+
+        @wraps(func)
+        def inner_wrapper(*args, **kwargs):
+            # sleeps before and after if said kwargs are True
+            time.sleep(SLEEP_TIME) if before else None
+            to_return = func(*args, **kwargs)
+            time.sleep(SLEEP_TIME) if after else None
+            return to_return
+
+        return inner_wrapper
+        
+    return outer_wrapper
+
+
+def fprint(string : str, enclosing_style : str = None):
+    """
+    Short for formatted print. This simplifies the use of the `print_formatted_text` function
+    since we will most of the time be enclosing the whole text with a style from 'PRINT_STYLE'.
+    """
+    encloser = (f"<{enclosing_style}>", f"</{enclosing_style}>") if enclosing_style is not None \
+               else ("", "")
+    enclosed_text = f"{encloser[0]}{string}{encloser[1]}"
+
+    print_formatted_text(HTML(enclosed_text), style=PRINT_STYLE)
+
+
+@sleep_decorator(after=True)
+def fprint_progress_text(progress_text : str):
+    """
+    Prints out formatted text using the 'progress' style in PRINT_STYLE
+    """
+    fprint(progress_text, enclosing_style='progress')
+
+
+@sleep_decorator(after=True)
+def fprint_separator():
+    """
+    Prints out formatted 'SEPARATOR' 
+    """
+    fprint(SEPARATOR, enclosing_style='separator')
+
+
+@sleep_decorator(before=True)
+def fprint_progress_with_separator(progress_text : str):
+    """
+    Calls `fprint_progress_text` and `fprint_separator` functions. With `@sleep_decorator`, this
+    causes the following behavior in order...
+         - sleep
+         - fprint_progress_text(progress_text)
+         - sleep
+         - fprint_separator()
+         - sleep
+    """
+    fprint_progress_text(progress_text)
+    fprint_separator()
+
+
+def fprint_errors(*errors : str):
+    """
+    Prints out formatted errors
+    """
+    for error in errors:
+        fprint(error, enclosing_style='error')
+
+
+
+# -------------------------------------------------------------------------------------
+# THINGS TO MANUALLY COLLECT UPDATE STATUS ON
+
+# Current items:
+#   - pip3 packages
+#
+#               
+#
+
+if __name__ == '__main__':
+    fprint_progress_with_separator("Retrieving list of outdated python3 packages...")
+
+outdated_pip3_packages = subprocess.run("pip3 list --outdated --format=freeze",
+        shell=True, capture_output=True, text=True)
+# NOTE: stdout is needed to get output
+outdated_pip3_packages = outdated_pip3_packages.stdout
+
+# packages will be listed as "<package>==<version_num>"
+PIP3_PACKAGES_TO_FILTER_OUT = ("dbus-python",)  # dbus-python is deprecated but still shows up
+                                                #  in pip3 command
+outdated_pip3_packages = ( package.split("==")[0] 
+                           for package in outdated_pip3_packages.split("\n")
+                           if package.split("==")[0] not in PIP3_PACKAGES_TO_FILTER_OUT )
+
+# -------------------------------------------------------------------------------------
+# COMMANDS AND PROGRESS TEXT
+
+# Has structure:
+#   { 'command' : ('progress text before command runs',
+#                  'progress text after command runs' )
+#   }
+
+COMMANDS_AND_PROGRESS_TEXT = {
+    "sudo apt update -y": (
+        "Updating system!",
+        "Done updating system!"
+    ),
+    "sudo apt upgrade -y --allow-downgrades": (
+        "Now starting upgrade!",
+        "Done upgrading!",
+    ),
+    "sudo apt autoremove -y": (
+        "Now autoremoving unnecessary programs!",
+        "Done autoremoving programs!"
+    ),
+    "flatpak update -y": (
+        "Now updating flatpaks!",
+        "Done updating flatpaks!"
+    ),
+    f"pip3 install --upgrade pip {' '.join(outdated_pip3_packages)}": (
+        "Now updating outdated python3 packages!",
+        "Done updating python3 packages!"
+    ),
+}
+
+
+def main():
+    """
+    Main program. Iterates through 'COMMANDS_AND_PROGRESS_TEXT' dictionary and appends any 
+    errors encountered if one does occur. Prints out errors at the end.
+
+    Returns 0 if everything ran successfully and 1 if any errors were encountered
+    """
+    
+    encountered_errors = []
+
+    for command, progress_tuple in COMMANDS_AND_PROGRESS_TEXT.items():
+        
+        # NOTE: `fprint_progress_with_separator` will have the following behavior:
+        #  - sleep
+        #  - fprint_progress_text(before_str)
+        #  - sleep
+        #  - fprint(separator)
+        #  - sleep 
+
+        before_str, after_str = progress_tuple
+
+        fprint_progress_with_separator(before_str)
+
+        process = subprocess.run(command, shell=True)
+        if (resp_code := process.returncode) != 0:
+            encountered_errors.append(
+                    f"Process <b>'{command}'</b> exited with error status <b>'{resp_code}'</b>."
+            )
+
+        fprint_progress_with_separator(after_str)
+    
+    # will not print anything if encountered_errors is empty
+    fprint_errors(*encountered_errors)
+
+    return 0 if not any(encountered_errors) else 1
+
+
+if __name__ == '__main__':
+    # `main` will return 0 or 1
+    # sys.exit will call `main`
+    sys.exit(0 if main() == 0 else 1)
+    
+
+
+
+
+        
+
+        
+        
+
+
+
+
