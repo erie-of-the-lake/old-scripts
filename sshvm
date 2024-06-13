@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+vm_name="$1"
+
+IP_PREFIX="192.168.122."
+
+
+# Go through catalogue of virtual machine IPs 
+
+case $vm_name in
+	"shopping") ip_suffix="66"        
+		        username="$vm_name" 
+        ;;
+	"college" ) ip_suffix="97" 
+		        username="user"     
+        ;;
+    "work"    ) ip_suffix="94"
+                username="$vm_name"
+        ;;
+	*)
+		echo "ERROR: '$1' is not a valid entry."
+		exit 1
+	;;
+
+esac
+
+ip_full="$IP_PREFIX$ip_suffix"
+
+
+### Check status of virtual machine
+
+## OLD
+#ping -c 1 "$ip_full"
+#rc=$?
+
+# NEW
+# yields empty string if vm is on
+turned_off="$(virsh list --name --state-shutoff | grep $vm_name)"
+#echo "$turned_off"
+
+# if offline
+if [[ "$turned_off" == "$vm_name" ]]; then
+	virsh start "$vm_name"
+	sleep 6
+fi
+
+### FINALLY
+
+# mount /home/$username to /mnt/vm/$vm_name
+mkdir -p /mnt/vm/"$vm_name"
+sshfs "$username@$ip_full":"/home/$username" /mnt/vm/"$vm_name"
+
+# ssh into vm with trusted X11 forwarding
+ssh -Y "$username@$ip_full"
+
