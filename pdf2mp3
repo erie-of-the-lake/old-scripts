@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# This requires pdftotext program as well as gTTS for python
+
+pdf="$1"
+mp3="$2"
+
+output_dir="$HOME/Documents/Audio_TTS"
+mkdir -p "$output_dir"
+temp_dir="/tmp/pdf2mp3"
+mkdir -p "$temp_dir"
+
+# make .mp3 file
+pdftotext "$pdf" - | gtts-cli - --nocheck --output "$output_dir/$mp3"
