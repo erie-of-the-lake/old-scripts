@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+# Limits CPU Cores based on if it's plugged or unplugged
+# by: Erie Shadrock
+
+import subprocess as sp
+import os
+
+limit_threads = 8
+total_threads = sp.run("nproc", shell=True, stdout=sp.PIPE, text=True, check=True)
+total_threads = int(total_threads.stdout)
+
+# lists `upower --enumerate` output
+upower_enum = sp.run("upower --enumerate", shell=True, stdout=sp.PIPE, text=True, check=True)
+upower_enum = upower_enum.stdout.split('\n')
+
+# want the one which has "battery" in it
+# NOTE: DOES NOT HANDLE EDGE CASE OF ***TWO*** BATTERIES
+upower_batt = [ line for line in upower_enum if "battery" in line.lower() ][0]
+
+# get output of upower -i {upower_batt}
+# and filter for line which shows "discharging"
+main_upower_cmd = sp.run(f"upower -i {upower_batt}", 
+        shell=True, stdout=sp.PIPE, text=True, check=True)
+main_upower_cmd = main_upower_cmd.stdout.split('\n')
+
+# want line which says
+#     state:         discharging
+for line in main_upower_cmd:
+    line = line.lower()
+    if "state" in line and "discharging" in line:
+        is_discharging = True
+else: # no discharging detected
+    is_discharging = False
+
+
+def turn_on_threads():
+    """Turns on all threads"""
+    for thread in range(total_threads):
+        sp.run(f"echo 1 > /sys/devices/system/cpu/cpu{thread}/online",
+                shell=True, stdout=sp.PIPE)
+
+def turn_off_threads():
+    """Turns off unwanted threads"""
+    for thread in range(limit_threads, total_threads):
+        sp.run(f"echo 0 > /sys/devices/system/cpu/cpu{thread}/online",
+                shell=True, stdout=sp.PIPE)
+
+output_file = "/home/fia/.local/cpu-threads-limited"
+
+# output_file will read as 0 or 1
+try:
+    with open(output_file, 'r') as f:
+        cpu_already_limited = f.read()
+        cpu_already_limited = bool(int(cpu_already_limited))
+except FileNotFoundError:
+    with open(output_file, 'w') as f:
+        f.write("0")
+    cpu_already_limited = False
+
+
+if is_discharging and not cpu_already_limited:
+    turn_off_threads()
+    sp.run(f"notify-send 'CPU threads {limit_threads} through {total_threads - 1} have been turned off'",
+            shell=True)
+    with open(output_file, 'w') as f:
+        f.write("1")
+elif not is_discharging and cpu_already_limited:
+    turn_on_threads()
+    sp.run(f"notify-send 'All CPU threads turned back on'", shell=True)
+    with open(output_file, 'w') as f:
+        f.write("0")
+
+
+
+
+
+
+
+
+
+
+#for ((i=4;i<$(nproc);i++)); do echo 0 > /sys/devices/system/cpu/cpu$i/online; done
+
