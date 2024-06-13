@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# This program uses maim to take a screenshot of the text, tesseract to do the image-to-text
+# processing, sed to filter '\n' out of the text, and xclip to add the text to the clipboard
+
+OUTPUT_PNGFILE="/tmp/clipboard.png"
+OUTPUT_TXTFILE_NOEXTENSION="/tmp/clipboard"
+OUTPUT_TXTFILE=$OUTPUT_TXTFILE_NOEXTENSION.txt
+
+maim --format=png --select $OUTPUT_PNGFILE 
+convert $OUTPUT_PNGFILE -resize 500% $OUTPUT_PNGFILE
+tesseract $OUTPUT_PNGFILE $OUTPUT_TXTFILE_NOEXTENSION -l eng
+# get rid of only '\n' with said but leave page breaks as new line
+# also filter out double spaces
+# filter out ␌ character, which seems to appear with every screenshot
+sed -i -e ':a' -e 'N' -e '$!ba' -e 's/\n/ /g' -e 's/  / /g' -e 's/.$//' /tmp/clipboard.txt
+# filter out '␌' character, which seems to appear with every screenshot
+sed -i -e 's/␌//g' -e 's/␌//g' /tmp/clipboard.txt
+xclip -selection clipboard /tmp/clipboard.txt
+
+# sends notification
+# Note: I am not sure which systems have 'notify-send'
+#     except for the Ubuntu-based ones I've used.
+notify-send "Screenshot formatted to text."
