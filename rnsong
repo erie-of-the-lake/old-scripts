@@ -1,0 +1,16 @@
+#!/bin/bash
+
+file=$1
+num=$2
+
+mapfile -td / arr < <(echo "$(pwd)"/"$file")
+
+#echo "${arr[@]}"
+album="${arr[-2]}"
+artist="${arr[-3]}"
+song="$(echo $file | cut -f1 -d'.')"
+#echo "$album"
+#echo "$artist"
+
+id3v2 --track $num --artist "$artist" --album "$album" --song "$song" "$(pwd)"/"$file"
+mv "$(pwd)"/"$file" "$(pwd)"/"$(printf '%02d' $num) $file"
