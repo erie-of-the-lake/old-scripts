@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# This program will archive a directory using a multithreaded process
+# and the program bzip2.
+# The first argument contains the directory,
+# the second arg contains the archive name (e.g. "something.tar.bz2"),
+# and the third arg contains the number of threads to use
+
+dir_to_archive="$1"
+archive_name="$2"
+
+# if $2 was not supplied
+if [ -z "$3" ]; then
+	num_threads="$((`nproc` / 2))"
+else
+	num_threads="$3"
+fi
+
+# now compress!!
+#tar -c "$dir_to_archive" | pbzip2 --stdout --verbose --compress --best -p"$num_threads" > "$archive_name.tar.bz2"
+
+#tar -c "$dir_to_archive" | pigz --stdout --verbose --best --processes "$num_threads" > "$archive_name.tar.gz"
+
+#tar -c "$dir_to_archive" | pigz --stdout --verbose --best --processes "$num_threads" --zlib > "$archive_name.tar.zz"
+
+#tar -c "$dir_to_archive" | pigz --stdout --verbose -11 --processes "$num_threads" > "$archive_name.tar.gz"
+
+tar -c "$dir_to_archive" | xz --keep --stdout --threads="$num_threads" -9 --verbose > "$archive_name.tar.xz"
+
