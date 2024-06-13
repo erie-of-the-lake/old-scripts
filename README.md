@@ -35,25 +35,7 @@ When a particular script has positional and/or optional arguments, the relevant 
 
 ## `add-res`
 
-## `vpnr`
-
-Meant to work with the `surfshark-vpn` CLI, `vpnr`, short for *vpn refresh*, temporarily resets part of the [`ufw`](https://manpages.debian.org/bullseye/ufw/ufw-framework.8.en.html) firewall via [`unfirewall`](#`unfirewall`), refreshes a SurfShark VPN connection, and re-enables a system-wide VPN killswitch via [`firewall`](#`firewall`). In other words, if no additional arguments are called, `vpnr` essentially performs the following behavior in bash-like pseudocode:
-```bash
-surfshark-vpn disable && unfirewall && surfshark-vpn enable && firewall
-```
-
-### Synopsis
-
-**vpnr** [-s -e]
-
-### Options
-
-**-s**
-    Make a soft refresh of `surfshark-vpn`, never disabling or turning it off completely
-**-e**
-    Exit the terminal session after a successful run of the program
-`add-res` was the chosen output name for [`gen-res`](#`gen-res`). In simple terms, it uses [`xrandr`](https://x.org/releases/X11R7.5/doc/man/man1/xrandr.1.html) to set resolutions from 50% to 100% (inclusive) of 1440p at a target refresh rate of 144 Hz. This makes it especially useful for games which lack a scaling factor or for injecting AMD FSR 1.0 on games run under Steam Proton.
-
+`add-res`, short for *add resolutions*, is the output script of [`gen-res`](#gen-res). Through `xrandr --addmode` and `xrandr --newmode`, it adds pre-calculated resolutions and their corresponding CVT, or *Coordinated Video Timings, from 720p all the way to 1440p, ultimately aimed to be used on a 1440p monitor running at 144 Hz.
 
 ## `archive-dir`
 
