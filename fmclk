@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# This program forces memory clock to be 2
+
+# Directory for graphics card
+dir_="/sys/class/drm/card0/device"
+
+# Set power_dpm_force_performance_level to 'high' or 'manual'
+sudo sh -c "echo 'manual' > /sys/class/drm/card0/device/power_dpm_force_performance_level"
+
+# Force pp_dpm_mclk to '2' or highest
+sudo sh -c "echo '2' > /sys/class/drm/card0/device/pp_dpm_mclk"
