@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# This script creates a ramdisk
+
+RAMDISK_SIZE_DEFAULT="16G"
+RAMDISK_DIR="/run/media/$USER/ramdisk"
+
+# Set ramdisk size
+if [ "$2" == "" ]; then
+    ramdisk_size="$RAMDISK_SIZE_DEFAULT"
+else
+    ramdisk_size="$2"
+fi
+
+case $1 in
+    "mount")
+        if ! [ -d $RAMDISK_DIR ]; then
+            sudo mkdir -p "$RAMDISK_DIR"
+            sudo mount -t tmpfs -o size="$ramdisk_size" tmpfs "$RAMDISK_DIR"
+            echo "Successfully created ramdisk!"
+            exit 0
+        else
+            echo "ERROR: A ramdisk already exists in $RAMDISK_DIR"
+            exit 1
+        fi
+        ;;
+    "umount")
+        sudo umount "$RAMDISK_DIR"
+        sudo rmdir "$RAMDISK_DIR"
+        echo "Successfully unmounted ramdisk!"
+        exit 0
+        ;;
+    *)
+        echo "ERROR: '$1' is an invalid argument. Arguments must be 'mount' or 'umount'."
+        exit 1
+        ;;
+esac
