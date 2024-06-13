@@ -1,0 +1,245 @@
+#!/usr/bin/env bash
+
+# include: .jpg, .jpeg, .png, .gif
+SUPPORTED_FORMATS=("jpg" "jpeg" "png" "gif")
+
+### Check if saved directory file exists ###
+saved_paths_dir="$HOME/bin"
+saved_paths_name="saved_paths.txt"
+joined_path=$saved_paths_dir/$saved_paths_name
+
+# Check if saved_paths exists
+if ! [ -e $joined_path ]; then
+    touch $joined_path
+fi
+
+# If saved_paths is empty
+if ! [ -s $joined_path ]; then
+
+    first_time=1
+    
+    while true; do
+        echo "Enter a directory you would like to show:"
+        read new_dir
+
+        if [ -d $new_dir ]; then
+            echo $new_dir >> $joined_path
+            break
+        fi
+
+        # if-then check failed
+        echo "$new_dir is an invalid directory. Try again."
+        sleep 1
+    done
+else
+    first_time=0
+fi
+
+
+### Read user input for adding new path ###
+added_dir=0
+while [ $added_dir -eq 0 ] && [ $first_time -eq 0 ]; do
+    read -p "Would you like to add a new directory? [y/N] " response
+
+    case $response in
+        y|Y) 
+            echo "Enter new directory:"
+            read new_dir
+
+            # Check if new_dir is a directory
+            if [ -d $new_dir ]; then
+                duplicate_exists=0
+                ### Parse saved_paths to see if $new_dir is in there ###
+                # Create array
+                readarray -t temp_array < $joined_path
+                # Parse through array
+                for i in "${temp_array[@]}"; do
+                    if [ $i == $new_dir ]; then
+                        duplicate_exists=1
+                        echo "$new_dir already exists in $joined_path."
+                        sleep 1
+                        echo "Continuing..."
+                        sleep 2
+                    fi
+                done
+                
+                # Finally add new_dir to saved_paths text file if no duplicate exists
+                if [ $duplicate_exists -eq 0 ]; then
+                    echo $new_dir >> $joined_path
+                    break
+                fi
+            else
+                echo "\"$new_dir\" is an invalid directory. Try again."
+                echo ""
+                sleep 1
+            fi
+        ;;
+
+        n|N|"")
+            echo ""
+            sleep 0.25
+            break
+        ;;
+
+        *)
+            echo "Invalid input. Try again."
+            sleep 1
+        ;;    
+    esac
+done
+
+
+### Now select which directory to show images from ###
+readarray -t possible_dirs < $joined_path
+num_dirs="${#possible_dirs[@]}"
+dir_selected=0
+while [ $dir_selected -eq 0 ]; do
+    echo -e "\nHere are the available directories:"
+    for (( i=0; i<$num_dirs; i++ )); do
+        echo -e "\t$((i+1))) ${possible_dirs[$i]}"
+    done
+
+    read -p "Select the number corresponding to your desired directory [1-$(($num_dirs))]: " chosen_num
+    
+    case $chosen_num in
+        ""|*[!0-9]*) # chosen_num not an integer
+            echo "'$chosen_num' is not valid. Try again."
+            sleep 1
+        ;;
+
+        *) # chosen_num IS an integer
+            if (( 1 <= $chosen_num <= $num_dirs )); then
+                dir_selected=1
+            else
+                echo "'$chosen_num' is not a valid number. Try again."
+                sleep 1
+            fi
+        ;;   
+    esac
+done
+
+
+### Now show pictures from selected directory ###
+####
+# NEED TO DO: Make pictures be able to be shown RECURSIVELY
+#             in embedded directories of selected directory.
+####
+selected_dir="${possible_dirs[$(($chosen_num-1))]}"
+####
+# NEED TO DO: Eventually add "date_asc" and "date_desc" functionality
+####
+DISPLAY_METHODS=("random" "alphabetical" "by date")
+num_methods="${#DISPLAY_METHODS[@]}"
+# Choose display method
+method_selected=0
+while [ $method_selected -eq 0 ]; do
+    echo -e "\nHere are the possible display methods:"
+
+    for (( i=0; i<$num_methods; i++ )); do
+        echo -e "\t$((i+1))) ${DISPLAY_METHODS[$i]}"
+    done
+
+    read -p "Select the number corresponding to your desired method [1-$(($num_methods))] (1=Default): " chosen_method_num
+    
+    case $chosen_method_num in
+        *[!0-9]*) # chosen_num not an integer
+            echo "'$chosen_method_num' is not valid. Try again."
+            sleep 1
+        ;;
+        1|"") # default
+            chosen_method_num=1
+            method_selected=1
+        ;;
+        *) # chosen_num IS an integer (not including 1)
+            if (( 2 <= $chosen_method_num <= $num_methods )); then
+                method_selected=1
+            else
+                echo "'$chosen_method_num' is not a valid number. Try again."
+                sleep 1
+            fi
+        ;;   
+    esac
+done
+
+function contains () {
+    local arr_to_search=$#
+    local to_find=${!arr_to_search}
+    for (( i=1; i<$#; i++ )) {
+        if [ "${!i}" == "${to_find}" ]; then
+            echo "1"
+            return 0
+        fi
+    }
+    echo "0"
+    return 1
+}
+
+
+# NOW show pictures
+chosen_method="${DISPLAY_METHODS[$(($chosen_method_num-1))]}"
+temp_dir="/tmp/image-shower"
+# need to get rid of all symbolic links
+if [ -d $temp_dir ]; then 
+   rm -r $temp_dir/
+fi
+mkdir $temp_dir
+
+min_num=$(echo "10^18" | bc)
+max_num=$(echo "10^19-1" | bc)
+
+function assign_random () {
+    local f=$1
+    f_arr=(${f//./ }) # equivalent to f.split(".") in python
+    extension="${f_arr[-1]}"
+    if [ $(contains "${SUPPORTED_FORMATS[@]}" ${extension} &) == "1" ]; then
+        linked_filename="$(shuf -i $min_num-$max_num -n 1).$extension" 
+        ln -s $f $temp_dir/$linked_filename 
+    fi
+}
+
+function assign_filename () {
+    local f=$1
+    f_arr=(${f//./ })
+    extension="${f_arr[-1]}"
+    if [ $(contains "${SUPPORTED_FORMATS[@]}" ${extension} &) == "1" ]; then
+        f_buffer=(${f//// })
+        linked_filename="${f_buffer[-1]}"
+        ln -s $f $temp_dir/$linked_filename 
+    fi
+}
+
+function assign_crtime () {
+    local f=$1
+    f_arr=(${f//./ })
+    extension="${f_arr[-1]}"
+    if [ $(contains "${SUPPORTED_FORMATS[@]}" ${extension} &) == "1" ]; then
+        linked_filename="$(stat -c '%W' $f).$extension" 
+        # -f needed for quiet operation in case of duplicates
+        ln -sf $f $temp_dir/$linked_filename 
+    fi
+}
+
+case $chosen_method in
+    "${DISPLAY_METHODS[0]}") # random
+        for f in $selected_dir/*; do
+            # need this to be parallelized
+            # otherwise takes bunch of time to do with single thread
+            assign_random $f &
+        done
+    ;;
+    "${DISPLAY_METHODS[1]}") # alphabetical
+        # Want to keep every operation within $temp_dir
+        for f in $selected_dir/*; do
+            assign_filename $f &
+        done
+    ;;
+    "${DISPLAY_METHODS[2]}") # by date (oldest to newest)
+        for f in $selected_dir/*; do
+            # need parallelization as well
+            assign_crtime $f &
+        done
+    ;;
+esac
+
+# Finally display images
+eog $temp_dir
