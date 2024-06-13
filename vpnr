@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Alias for main refresh action
+alias refresh="./$HOME/bin/unfirewall && sleep 2 && sudo surfshark-vpn attack && sleep 3 && ./$HOME/bin/firewall"
+
+# Alias to turn off surfshark-vpn
+alias down="sudo surfshark-vpn down"
+
+while getopts "se" opt; do
+	case $opt in
+		s) soft_refresh=true;;
+		e) exit_flag=true;;
+		\?) echo "Error: invalid input";;
+	esac 
+done 
+
+if [[ $soft_refresh == true ]]; then
+	$refresh
+else
+	down && $refresh	
+fi
+
+if [[ $exit_flag == true ]]; then
+	exit
+fi
