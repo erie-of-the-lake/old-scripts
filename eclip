@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+file_to_copy="$1"
+#echo $file_to_copy
+
+xclip -selection clipboard "$file_to_copy" 
+exit_status=$?
+
+if [[ $exit_status == 0 ]]; then
+    echo "'$file_to_copy' successfully copied to clipboard"
+    exit 0
+else
+    echo "ERROR: '$1' unsuccessfully copied. xclip returned with exit status '$exit_status'"
+    exit 1
+fi
+
